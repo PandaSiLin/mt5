@@ -28,4 +28,4 @@ else:
     print("failed to connect at account #{}, error code: {}".format(account, mt5.last_error()))
  
 # shut down connection to the MetaTrader 5 terminal
-mt5.shutdown()
+#mt5.shutdown()
