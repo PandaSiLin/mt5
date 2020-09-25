@@ -45,46 +45,48 @@ def open_trade(action, symbol, lot, sl_points, tp_points, deviation):
 mt5.initialize()
 mt5.login(login = 35146240, password = "xt7lixru")
 
-# load trained model
-model = keras.models.load_model("LSTM_eurusd.model")
+symbol = "EURUSD" 
+positions=mt5.positions_get(symbol = symbol)
 
-# set parameters
-symbol = "EURUSD"   
-lot = 0.1
-tp_points = 20
-sl_points = 20
-deviation = 5
-ordernum = 10001
+if not positions:
 
-# Get quote
-rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_H1, 0, 100)
-rates = pd.DataFrame(rates)
-rates['time']=pd.to_datetime(rates['time'], unit='s')
+    # load trained model
+    model = keras.models.load_model("LSTM_eurusd.model")
 
-# Forecast
-X = rates.loc[-1:0,['close']].values
-Xpred = np.reshape(X, (X.shape[0], 1, X.shape[1]))
-Yhat = model.predict(Xpred)
-xhat = X[0,0]
-yhat = Yhat[0,0]
+    # set parameters
+    lot = 0.1
+    tp_points = 20
+    sl_points = 20
+    deviation = 5
+    ordernum = 10001
 
-# Action
-positions=mt5.positions_get(symbol)
+    # Get quote
+    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_H1, 0, 100)
+    rates = pd.DataFrame(rates)
+    rates['time']=pd.to_datetime(rates['time'], unit='s')
 
-# open order only if there is no open position
-if positions == None:
+    # Forecast
+    X = rates.loc[-1:0,['close']].values
+    Xpred = np.reshape(X, (X.shape[0], 1, X.shape[1]))
+    Yhat = model.predict(Xpred)
+    xhat = X[0,0]
+    yhat = Yhat[0,0]
 
-    # open order only if it can have more than tp
-    if abs(yhat - xhat) >= tp_points * 0.0001:
 
-        if yhat >= xhat:
-            action = "buy"
-        else:
-            action = "sell"
+    # open order only if there is no open position
+    if positions == None:
+
+        # open order only if it can have more than tp
+        if abs(yhat - xhat) >= tp_points * 0.0001:
+
+            if yhat >= xhat:
+                action = "buy"
+            else:
+                action = "sell"
+            
+            open_trade(action, symbol, lot, sl_points, tp_points, deviation)
         
-        open_trade(action, symbol, lot, sl_points, tp_points, deviation)
-    
-    else:
-        print("estimated closing is: ", yhat)
+        else:
+            print("estimated closing is: ", yhat)
 
-print("yhat :", yhat)
+    print("yhat :", yhat)
